@@ -55,8 +55,9 @@ Follow these steps:
 First, we need to create the smart contract.
 ```solidity
 pragma solidity ^0.8.0;
+import "@openzeppelin/contracts@4.8.2/access/Ownable.sol";
 
-contract JobPortal {
+contract Insurance is Ownable {
    
 }
 ```
