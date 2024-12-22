@@ -1,14 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts@4.8.2/access/Ownable.sol";
 
 contract Insurance is Ownable {
     // Enum to represent the status of a policy
-    enum PolicyStatus { Active, Inactive }
+    enum PolicyStatus {
+        Active,
+        Inactive
+    }
 
     // Enum to represent the status of a claim
-    enum ClaimStatus { Submitted, Approved, Rejected }
+    enum ClaimStatus {
+        Submitted,
+        Approved,
+        Rejected
+    }
 
     // Struct to represent an insurance policy
     struct Policy {
@@ -39,15 +46,40 @@ contract Insurance is Ownable {
 
     // Events to log important actions
     event PolicyIssued(uint256 policyId, address indexed policyholder);
-    event PremiumPaid(uint256 policyId, address indexed policyholder, uint256 amount);
-    event ClaimSubmitted(uint256 claimId, uint256 policyId, address indexed claimant);
-    event ClaimApproved(uint256 claimId, uint256 policyId, address indexed claimant, uint256 amount);
-    event ClaimRejected(uint256 claimId, uint256 policyId, address indexed claimant);
-    event ClaimPaid(uint256 claimId, uint256 policyId, address indexed claimant, uint256 amount);
+    event PremiumPaid(
+        uint256 policyId,
+        address indexed policyholder,
+        uint256 amount
+    );
+    event ClaimSubmitted(
+        uint256 claimId,
+        uint256 policyId,
+        address indexed claimant
+    );
+    event ClaimApproved(
+        uint256 claimId,
+        uint256 policyId,
+        address indexed claimant,
+        uint256 amount
+    );
+    event ClaimRejected(
+        uint256 claimId,
+        uint256 policyId,
+        address indexed claimant
+    );
+    event ClaimPaid(
+        uint256 claimId,
+        uint256 policyId,
+        address indexed claimant,
+        uint256 amount
+    );
 
     // Modifier to check if the caller is an authorized insurer
     modifier onlyAuthorizedInsurer() {
-        require(authorizedInsurers[msg.sender], "Caller is not an authorized insurer");
+        require(
+            authorizedInsurers[msg.sender],
+            "Caller is not an authorized insurer"
+        );
         _;
     }
 
@@ -57,16 +89,31 @@ contract Insurance is Ownable {
     }
 
     // Function to issue a new policy
-    function issuePolicy(address policyholder, uint256 premium, uint256 coverageAmount, uint256 duration) external onlyAuthorizedInsurer {
+    function issuePolicy(
+        address policyholder,
+        uint256 premium,
+        uint256 coverageAmount,
+        uint256 duration
+    ) external onlyAuthorizedInsurer {
         policyCount++;
-        policies[policyCount] = Policy(policyCount, policyholder, premium, coverageAmount, block.timestamp + duration, PolicyStatus.Active);
+        policies[policyCount] = Policy(
+            policyCount,
+            policyholder,
+            premium,
+            coverageAmount,
+            block.timestamp + duration,
+            PolicyStatus.Active
+        );
         emit PolicyIssued(policyCount, policyholder);
     }
 
     // Function to pay the premium for a policy
     function payPremium(uint256 policyId) external payable {
         Policy storage policy = policies[policyId];
-        require(policy.policyholder == msg.sender, "Only the policyholder can pay the premium");
+        require(
+            policy.policyholder == msg.sender,
+            "Only the policyholder can pay the premium"
+        );
         require(policy.status == PolicyStatus.Active, "Policy is not active");
         require(block.timestamp <= policy.expiration, "Policy has expired");
         require(msg.value == policy.premium, "Incorrect premium amount");
@@ -75,14 +122,28 @@ contract Insurance is Ownable {
     }
 
     // Function to submit a claim for a policy
-    function submitClaim(uint256 policyId, uint256 claimAmount, string calldata reason) external {
+    function submitClaim(
+        uint256 policyId,
+        uint256 claimAmount,
+        string calldata reason
+    ) external {
         Policy storage policy = policies[policyId];
-        require(policy.policyholder == msg.sender, "Only the policyholder can submit a claim");
+        require(
+            policy.policyholder == msg.sender,
+            "Only the policyholder can submit a claim"
+        );
         require(policy.status == PolicyStatus.Active, "Policy is not active");
         require(block.timestamp <= policy.expiration, "Policy has expired");
 
         claimCount++;
-        claims[claimCount] = Claim(claimCount, policyId, msg.sender, claimAmount, reason, ClaimStatus.Submitted);
+        claims[claimCount] = Claim(
+            claimCount,
+            policyId,
+            msg.sender,
+            claimAmount,
+            reason,
+            ClaimStatus.Submitted
+        );
 
         emit ClaimSubmitted(claimCount, policyId, msg.sender);
     }
@@ -92,16 +153,27 @@ contract Insurance is Ownable {
         Claim storage claim = claims[claimId];
         Policy storage policy = policies[claim.policyId];
         require(policy.status == PolicyStatus.Active, "Policy is not active");
-        require(claim.status == ClaimStatus.Submitted, "Claim is not in a valid state");
+        require(
+            claim.status == ClaimStatus.Submitted,
+            "Claim is not in a valid state"
+        );
 
         claim.status = ClaimStatus.Approved;
-        emit ClaimApproved(claimId, claim.policyId, claim.claimant, claim.claimAmount);
+        emit ClaimApproved(
+            claimId,
+            claim.policyId,
+            claim.claimant,
+            claim.claimAmount
+        );
     }
 
     // Function to reject a submitted claim
     function rejectClaim(uint256 claimId) external onlyAuthorizedInsurer {
         Claim storage claim = claims[claimId];
-        require(claim.status == ClaimStatus.Submitted, "Claim is not in a valid state");
+        require(
+            claim.status == ClaimStatus.Submitted,
+            "Claim is not in a valid state"
+        );
 
         claim.status = ClaimStatus.Rejected;
         emit ClaimRejected(claimId, claim.policyId, claim.claimant);
@@ -116,6 +188,11 @@ contract Insurance is Ownable {
         payable(claim.claimant).transfer(claim.claimAmount);
         claim.status = ClaimStatus.Approved; // Mark as approved again after payment
 
-        emit ClaimPaid(claimId, claim.policyId, claim.claimant, claim.claimAmount);
+        emit ClaimPaid(
+            claimId,
+            claim.policyId,
+            claim.claimant,
+            claim.claimAmount
+        );
     }
 }
